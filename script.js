@@ -1,26 +1,38 @@
-// CONFIGURAÇÃO
+// ========== CONFIGURAÇÃO ==========
 const SENHA = "casamento2026";
 let svgElement = null;
 let currentFileName = "convite";
 let isLoading = false;
+let originalStyles = {};
+let originalDimensions = {};
 
-// Inicialização
+// ========== INICIALIZAÇÃO ==========
 document.addEventListener('DOMContentLoaded', function() {
-    // Verificar se já está logado
+    // Verificar login salvo
     if (localStorage.getItem('casamento_logado') === 'true') {
         showEditor();
     }
     
-    // Mostrar loading ao entrar
-    document.getElementById('password').addEventListener('input', function() {
-        if (this.value === SENHA) {
-            document.querySelector('.btn-login').innerHTML = 
-                '<i class="fas fa-spinner fa-spin"></i> Entrando...';
+    // Atalhos de teclado
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+Enter para login
+        if (e.ctrlKey && e.key === 'Enter' && document.getElementById('loginScreen').classList.contains('active')) {
+            checkPassword();
+        }
+        
+        // Ctrl+S para SVG, Ctrl+P para PNG
+        if (e.ctrlKey && e.key === 's' && document.getElementById('editorScreen').classList.contains('active')) {
+            e.preventDefault();
+            downloadSVG();
+        }
+        if (e.ctrlKey && e.key === 'p' && document.getElementById('editorScreen').classList.contains('active')) {
+            e.preventDefault();
+            downloadPNGUltraHD();
         }
     });
 });
 
-// FUNÇÕES DE LOGIN
+// ========== FUNÇÕES DE LOGIN ==========
 function togglePassword() {
     const passwordInput = document.getElementById('password');
     const eyeIcon = document.querySelector('.eye-btn i');
@@ -37,16 +49,15 @@ function togglePassword() {
 function checkPassword() {
     const password = document.getElementById('password').value;
     const errorMsg = document.getElementById('loginError');
-    const loginBtn = document.querySelector('.btn-login');
+    const loginBtn = document.querySelector('.btn-login.premium');
     
     if (isLoading) return;
     
     if (password === SENHA) {
         isLoading = true;
-        loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
+        loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
         loginBtn.disabled = true;
         
-        // Pequeno delay para mostrar feedback
         setTimeout(() => {
             localStorage.setItem('casamento_logado', 'true');
             showEditor();
@@ -54,214 +65,246 @@ function checkPassword() {
         }, 500);
         
     } else {
-        errorMsg.textContent = "❌ Senha incorreta. Tente novamente.";
-        errorMsg.style.transform = 'scale(1.05)';
-        setTimeout(() => errorMsg.style.transform = 'scale(1)', 300);
+        errorMsg.textContent = "❌ Senha incorreta. Por favor, tente novamente.";
+        errorMsg.style.animation = 'none';
+        setTimeout(() => {
+            errorMsg.style.animation = 'pulse 0.5s';
+        }, 10);
     }
-}
-
-function showEditor() {
-    document.getElementById('loginScreen').classList.remove('active');
-    document.getElementById('editorScreen').classList.add('active');
-    loadSVGWithProgress();
 }
 
 function logout() {
-    localStorage.removeItem('casamento_logado');
-    document.getElementById('loginScreen').classList.add('active');
-    document.getElementById('editorScreen').classList.remove('active');
-    document.getElementById('password').value = '';
-    document.getElementById('loginError').textContent = '';
-    document.querySelector('.btn-login').innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar';
-    document.querySelector('.btn-login').disabled = false;
+    if (confirm('Tem certeza que deseja sair do editor?')) {
+        localStorage.removeItem('casamento_logado');
+        document.getElementById('loginScreen').classList.add('active');
+        document.getElementById('editorScreen').classList.remove('active');
+        document.getElementById('password').value = '';
+        document.getElementById('loginError').textContent = '';
+        
+        const loginBtn = document.querySelector('.btn-login.premium');
+        loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Acessar Editor';
+        loginBtn.disabled = false;
+    }
 }
 
-// CARREGAR SVG COM FEEDBACK DE PROGRESSO
-function loadSVGWithProgress() {
-    const container = document.getElementById('svgContainer');
-    
-    // Mostrar loading
-    container.innerHTML = `
-        <div class="loading-container">
-            <div class="loading-spinner">
-                <i class="fas fa-ring fa-spin"></i>
-            </div>
-            <p>Carregando convite...</p>
-            <p class="loading-text">Isso pode levar alguns segundos devido ao tamanho do arquivo</p>
-            <div class="progress-bar">
-                <div class="progress-fill"></div>
-            </div>
-        </div>
-    `;
-    
-    // Simular progresso
-    let progress = 0;
-    const progressInterval = setInterval(() => {
-        progress += 5;
-        const progressFill = container.querySelector('.progress-fill');
-        if (progressFill) {
-            progressFill.style.width = Math.min(progress, 90) + '%';
-        }
-    }, 100);
-    
-    // Carregar SVG
-    fetch('convite.svg')
-        .then(response => {
-            if (!response.ok) throw new Error('SVG não encontrado');
-            return response.text();
-        })
-        .then(svgText => {
-            clearInterval(progressInterval);
-            
-            // Mostrar que está processando
-            container.querySelector('.loading-text').textContent = 'Processando elementos gráficos...';
-            container.querySelector('.progress-fill').style.width = '95%';
-            
-            // Dar tempo para renderizar
-            setTimeout(() => {
-                container.innerHTML = svgText;
-                svgElement = document.querySelector('#svgContainer svg');
-                
-                if (!svgElement) {
-                    throw new Error('Elemento SVG não criado');
-                }
-                
-                // Otimizar para SVG grande
-                optimizeSVG();
-                
-                // Verificar IDs
-                const nomeEl = svgElement.querySelector('#guestName');
-                const countEl = svgElement.querySelector('#guestCount');
-                
-                if (!nomeEl || !countEl) {
-                    console.warn('IDs não encontrados no SVG. Verifique:');
-                    console.log('- guestName:', !!nomeEl);
-                    console.log('- guestCount:', !!countEl);
-                    
-                    // Tentar encontrar alternativas
-                    findTextElements();
-                }
-                
-                // Mostrar sucesso
-                showNotification('Convite carregado com sucesso!', 'success');
-                
-                updatePreview();
-                
-            }, 500);
-            
-        })
-        .catch(error => {
-            clearInterval(progressInterval);
-            console.error('Erro ao carregar SVG:', error);
-            
-            container.innerHTML = `
-                <div class="error-container">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <h3>Erro ao carregar o convite</h3>
-                    <p>${error.message}</p>
-                    <button onclick="loadSVGWithProgress()" class="btn-retry">
-                        <i class="fas fa-redo"></i> Tentar novamente
-                    </button>
-                </div>
-            `;
+// ========== MOSTRAR EDITOR ==========
+function showEditor() {
+    document.getElementById('loginScreen').classList.remove('active');
+    document.getElementById('editorScreen').classList.add('active');
+    loadSVGWithPremiumQuality();
+}
+
+// ========== CARREGAR SVG COM QUALIDADE PREMIUM ==========
+async function loadSVGWithPremiumQuality() {
+    try {
+        showLoadingState('Carregando convite em qualidade máxima...');
+        
+        const response = await fetch('convite.svg');
+        if (!response.ok) throw new Error('Arquivo convite.svg não encontrado');
+        
+        const svgText = await response.text();
+        document.getElementById('svgContainer').innerHTML = svgText;
+        svgElement = document.querySelector('#svgContainer svg');
+        
+        if (!svgElement) throw new Error('SVG não pôde ser carregado');
+        
+        // 1. PRESERVAR DIMENSÕES E ESTILOS ORIGINAIS
+        preserveOriginalData();
+        
+        // 2. APLICAR OTIMIZAÇÕES DE QUALIDADE
+        applyQualityOptimizations();
+        
+        // 3. CONFIGURAR EDIÇÃO DE TEXTO
+        setupTextEditing();
+        
+        // 4. MOSTRAR SUCESSO
+        hideLoadingState();
+        showNotification('🎉 Convite carregado em qualidade premium!', 'success');
+        
+        console.log('✅ SVG carregado com sucesso:', {
+            dimensoes: originalDimensions,
+            estilos: originalStyles
         });
+        
+    } catch (error) {
+        console.error('❌ Erro ao carregar SVG:', error);
+        showErrorState(`Erro: ${error.message}`);
+    }
 }
 
-// OTIMIZAR SVG GRANDE
-function optimizeSVG() {
-    if (!svgElement) return;
+// 1. PRESERVAR DADOS ORIGINAIS
+function preserveOriginalData() {
+    // Salvar dimensões
+    const viewBox = svgElement.getAttribute('viewBox');
+    if (viewBox) {
+        const [x, y, width, height] = viewBox.split(' ').map(Number);
+        originalDimensions = { x, y, width, height };
+    } else {
+        originalDimensions = {
+            width: parseInt(svgElement.getAttribute('width')) || 800,
+            height: parseInt(svgElement.getAttribute('height')) || 1131
+        };
+    }
     
-    // 1. Remover listeners desnecessários
-    svgElement.removeAttribute('onload');
+    // Salvar estilos dos textos
+    const nomeEl = svgElement.querySelector('#guestName');
+    const countEl = svgElement.querySelector('#guestCount');
+    
+    if (nomeEl) {
+        originalStyles.nome = {
+            element: nomeEl,
+            fontFamily: getComputedStyle(nomeEl).fontFamily || 'inherit',
+            fontSize: parseFloat(getComputedStyle(nomeEl).fontSize) || 28,
+            fontWeight: getComputedStyle(nomeEl).fontWeight || 'normal',
+            fill: nomeEl.getAttribute('fill') || '#000000',
+            textAnchor: nomeEl.getAttribute('text-anchor') || 'middle',
+            originalX: nomeEl.getAttribute('x'),
+            originalY: nomeEl.getAttribute('y'),
+            originalTransform: nomeEl.getAttribute('transform'),
+            originalText: nomeEl.textContent || 'NOME_AQUI'
+        };
+    }
+    
+    if (countEl) {
+        originalStyles.count = {
+            element: countEl,
+            fontFamily: getComputedStyle(countEl).fontFamily || 'inherit',
+            fontSize: parseFloat(getComputedStyle(countEl).fontSize) || 16,
+            fill: countEl.getAttribute('fill') || '#000000',
+            textAnchor: countEl.getAttribute('text-anchor') || 'middle',
+            originalText: countEl.textContent || '1'
+        };
+    }
+}
+
+// 2. APLICAR OTIMIZAÇÕES DE QUALIDADE
+function applyQualityOptimizations() {
+    // Forçar alta qualidade de renderização
+    svgElement.setAttribute('shape-rendering', 'geometricPrecision');
+    svgElement.setAttribute('text-rendering', 'optimizeLegibility');
+    svgElement.setAttribute('image-rendering', 'optimizeQuality');
+    
+    // Remover interatividade desnecessária
     svgElement.removeAttribute('onclick');
-    
-    // 2. Desabilitar interatividade para melhor performance
+    svgElement.removeAttribute('onmouseover');
     svgElement.style.pointerEvents = 'none';
     
-    // 3. Forçar renderização otimizada
-    svgElement.style.imageRendering = 'optimizeQuality';
-    svgElement.style.shapeRendering = 'geometricPrecision';
-    
-    console.log('SVG otimizado. Dimensões:', {
-        width: svgElement.getAttribute('width'),
-        height: svgElement.getAttribute('height'),
-        elements: svgElement.querySelectorAll('*').length
-    });
+    // Manter proporções
+    svgElement.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 }
 
-// BUSCAR ELEMENTOS DE TEXTO ALTERNATIVOS
-function findTextElements() {
-    if (!svgElement) return;
+// 3. CONFIGURAR EDIÇÃO DE TEXTO
+function setupTextEditing() {
+    const nomeInput = document.getElementById('guestName');
+    const countInput = document.getElementById('guestCount');
     
-    const allTexts = svgElement.querySelectorAll('text, tspan');
-    let nomeFound = false;
-    let countFound = false;
-    
-    allTexts.forEach(el => {
-        const text = el.textContent.trim();
-        
-        // Procurar por "NOME_AQUI" ou similar
-        if (text === 'NOME_AQUI' || text === 'NOME' || text.includes('NOME')) {
-            el.id = 'guestName';
-            nomeFound = true;
-            console.log('✅ NOME encontrado e ID adicionado');
-        }
-        
-        // Procurar por número ou "cfd"
-        if (text === '1' || text === '(cfd )' || text.includes('cfd')) {
-            el.id = 'guestCount';
-            countFound = true;
-            console.log('✅ Número encontrado e ID adicionado');
-        }
+    // Configurar contador de caracteres
+    nomeInput.addEventListener('input', function() {
+        const length = this.value.length;
+        document.getElementById('nameCounter').textContent = `${length}/40`;
+        updateNameWithSmartCentering(this.value);
     });
     
-    if (!nomeFound || !countFound) {
-        console.warn('⚠️ Elementos de texto principais não encontrados');
+    countInput.addEventListener('input', function() {
+        updateCount(this.value);
+    });
+    
+    // Valores iniciais
+    if (originalStyles.nome) {
+        nomeInput.value = originalStyles.nome.originalText;
+        updateNameWithSmartCentering(originalStyles.nome.originalText);
+    }
+    
+    if (originalStyles.count) {
+        countInput.value = originalStyles.count.originalText.replace(/\D/g, '') || '1';
+        updateCount(countInput.value);
     }
 }
 
-// FUNÇÕES DO EDITOR
-function updatePreview() {
-    if (isLoading) return;
+// ========== EDIÇÃO INTELIGENTE DE TEXTO ==========
+function updateNameWithSmartCentering(nome) {
+    if (!nome || !originalStyles.nome) return;
     
-    const nome = document.getElementById('guestName').value.trim() || "NOME_AQUI";
-    const count = document.getElementById('guestCount').value || "1";
+    const nomeEl = originalStyles.nome.element;
+    const text = nome.trim() || "NOME_AQUI";
     
-    // Atualizar preview de texto
-    document.getElementById('previewName').textContent = nome || "NOME_AQUI";
-    document.getElementById('previewCount').textContent = count;
+    // 1. APLICAR ESTILOS ORIGINAIS
+    applyOriginalStyles(nomeEl, originalStyles.nome);
     
-    // Atualizar SVG se carregado
-    if (svgElement) {
-        const nomeEl = svgElement.querySelector('#guestName');
-        const countEl = svgElement.querySelector('#guestCount');
-        
-        if (nomeEl) {
-            nomeEl.textContent = nome;
-        } else {
-            console.warn('Elemento guestName não encontrado');
-        }
-        
-        if (countEl) {
-            // Manter apenas o número
-            const countText = count;
-            countEl.textContent = countText;
-        } else {
-            console.warn('Elemento guestCount não encontrado');
-        }
+    // 2. DEFINIR TEXTO
+    nomeEl.textContent = text;
+    
+    // 3. CALCULAR TAMANHO E CENTRALIZAR
+    const textWidth = estimateTextWidth(text, originalStyles.nome);
+    const maxWidth = originalDimensions.width * 0.8; // 80% da largura do convite
+    
+    // 4. AJUSTAR TAMANHO DA FONTE SE NECESSÁRIO
+    if (textWidth > maxWidth) {
+        const scaleFactor = maxWidth / textWidth;
+        const newSize = Math.max(originalStyles.nome.fontSize * scaleFactor, 16);
+        nomeEl.setAttribute('font-size', `${newSize}px`);
     }
     
-    // Atualizar nome do arquivo
-    const safeName = nome.replace(/[^a-z0-9áéíóúãõâêôç]/gi, '_').toLowerCase();
-    currentFileName = `convite_${safeName}_${count}p`;
+    // 5. CENTRALIZAR HORIZONTALMENTE
+    nomeEl.setAttribute('text-anchor', 'middle');
+    
+    // 6. MANTER POSIÇÃO VERTICAL ORIGINAL
+    if (originalStyles.nome.originalY) {
+        nomeEl.setAttribute('y', originalStyles.nome.originalY);
+    }
+    
+    // 7. ATUALIZAR PREVIEW E NOME DO ARQUIVO
+    document.getElementById('previewName').textContent = text;
+    currentFileName = `convite_${text.replace(/[^a-z0-9]/gi, '_').toLowerCase()}`;
+    
+    // 8. ANIMAÇÃO DE ATUALIZAÇÃO
+    nomeEl.style.opacity = '0.8';
+    setTimeout(() => nomeEl.style.opacity = '1', 150);
 }
 
+function updateCount(count) {
+    if (!originalStyles.count) return;
+    
+    const countEl = originalStyles.count.element;
+    const num = parseInt(count) || 1;
+    const text = num === 1 ? "1" : `${num} `;
+    
+    // Aplicar estilos originais
+    applyOriginalStyles(countEl, originalStyles.count);
+    
+    // Definir texto
+    countEl.textContent = text;
+    
+    // Centralizar
+    countEl.setAttribute('text-anchor', 'middle');
+    
+    // Atualizar preview
+    document.getElementById('previewCount').textContent = text;
+    currentFileName = currentFileName.split('_')[0] + `_${num}p`;
+}
+
+function applyOriginalStyles(element, styles) {
+    if (styles.fontFamily) element.setAttribute('font-family', styles.fontFamily);
+    if (styles.fontSize) element.setAttribute('font-size', `${styles.fontSize}px`);
+    if (styles.fontWeight) element.setAttribute('font-weight', styles.fontWeight);
+    if (styles.fill) element.setAttribute('fill', styles.fill);
+    if (styles.textAnchor) element.setAttribute('text-anchor', styles.textAnchor);
+}
+
+function estimateTextWidth(text, styles) {
+    // Estimativa aproximada (pode ser ajustada)
+    const fontSize = styles.fontSize || 28;
+    const avgCharWidth = fontSize * 0.6;
+    return text.length * avgCharWidth;
+}
+
+// ========== CONTROLES DE NÚMERO ==========
 function incrementCount() {
     const input = document.getElementById('guestCount');
     let value = parseInt(input.value) || 1;
     if (value < 10) {
         input.value = value + 1;
-        updatePreview();
+        updateCount(input.value);
     }
 }
 
@@ -270,26 +313,75 @@ function decrementCount() {
     let value = parseInt(input.value) || 1;
     if (value > 1) {
         input.value = value - 1;
-        updatePreview();
+        updateCount(input.value);
     }
 }
 
 function resetForm() {
-    document.getElementById('guestName').value = '';
-    document.getElementById('guestCount').value = '1';
-    updatePreview();
+    if (confirm('Limpar todos os campos?')) {
+        document.getElementById('guestName').value = '';
+        document.getElementById('guestCount').value = '1';
+        document.getElementById('nameCounter').textContent = '0/40';
+        
+        if (originalStyles.nome) {
+            updateNameWithSmartCentering(originalStyles.nome.originalText);
+        }
+        updateCount('1');
+        
+        showNotification('Formulário limpo com sucesso!', 'info');
+    }
 }
 
-// FUNÇÕES DE DOWNLOAD (OTIMIZADAS)
+// ========== DOWNLOAD SVG ==========
 function downloadSVG() {
-    if (!svgElement || isLoading) {
-        alert('Aguarde o SVG carregar completamente.');
+    if (!svgElement) {
+        showNotification('SVG não carregado. Aguarde o carregamento.', 'error');
         return;
     }
     
-    showNotification('Preparando download do SVG...', 'info');
+    try {
+        showNotification('Preparando SVG para download...', 'info');
+        
+        // Clonar para não modificar o original
+        const svgClone = svgElement.cloneNode(true);
+        
+        // Restaurar dimensões originais no clone
+        svgClone.setAttribute('width', originalDimensions.width);
+        svgClone.setAttribute('height', originalDimensions.height);
+        
+        // Serializar
+        const serializer = new XMLSerializer();
+        let source = serializer.serializeToString(svgClone);
+        source = '<?xml version="1.0" encoding="UTF-8"?>\n' + source;
+        
+        // Criar download
+        const blob = new Blob([source], {type: 'image/svg+xml;charset=utf-8'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${currentFileName}_original.svg`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showNotification('✅ SVG baixado com sucesso!', 'success');
+        
+    } catch (error) {
+        console.error('Erro SVG:', error);
+        showNotification('❌ Erro ao baixar SVG', 'error');
+    }
+}
+
+// ========== DOWNLOAD PNG ULTRA HD (TÉCNICA CANVA) ==========
+async function downloadPNGUltraHD() {
+    if (!svgElement || isLoading) {
+        showNotification('Aguarde o carregamento completo.', 'warning');
+        return;
+    }
     
-    // Desabilitar botão temporariamente
+    showNotification('🔄 Gerando PNG em qualidade ULTRA HD (4x)...', 'info');
+    
     const btn = event?.target;
     if (btn) {
         const originalHTML = btn.innerHTML;
@@ -299,457 +391,299 @@ function downloadSVG() {
         setTimeout(() => {
             btn.innerHTML = originalHTML;
             btn.disabled = false;
-        }, 2000);
+        }, 5000);
     }
     
-    setTimeout(() => {
-        try {
-            const serializer = new XMLSerializer();
-            let source = serializer.serializeToString(svgElement);
-            source = '<?xml version="1.0" encoding="UTF-8"?>\n' + source;
-            
-            const blob = new Blob([source], {type: 'image/svg+xml;charset=utf-8'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${currentFileName}.svg`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            showNotification('SVG baixado com sucesso!', 'success');
-            
-        } catch (error) {
-            console.error('Erro ao baixar SVG:', error);
-            showNotification('Erro ao baixar SVG. Tente novamente.', 'error');
-        }
-    }, 500);
+    try {
+        // 1. CRIAR SVG EM ALTA RESOLUÇÃO (4x)
+        const highResSVG = await createHighResolutionSVG(4);
+        
+        // 2. CONVERTER PARA CANVAS
+        const canvas = await convertSVGToCanvas(highResSVG);
+        
+        // 3. CRIAR PNG COM QUALIDADE MÁXIMA
+        const pngData = canvas.toDataURL('image/png', 1.0);
+        
+        // 4. BAIXAR
+        downloadFile(pngData, `${currentFileName}_ULTRA_HD.png`);
+        
+        showNotification('🎉 PNG ULTRA HD baixado com sucesso!', 'success');
+        
+    } catch (error) {
+        console.error('Erro PNG ULTRA HD:', error);
+        showNotification('❌ Falha ao gerar PNG. Tente o método alternativo.', 'error');
+        
+        // Método alternativo
+        tryAlternativePNG();
+    }
 }
 
-function downloadPNG() {
-    if (!svgElement || isLoading) {
-        alert('Aguarde o SVG carregar completamente.');
-        return;
-    }
-    
-    showNotification('Gerando PNG (pode levar alguns segundos)...', 'info');
-    
-    // Desabilitar botão
-    const btn = event?.target;
-    if (btn) {
-        const originalHTML = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Convertendo...';
-        btn.disabled = true;
-    }
-    
-    // Método 1: Usar canvas nativo (mais confiável)
-    generatePNGFromSVG()
-        .then(pngData => {
-            if (pngData) {
-                downloadFile(pngData, `${currentFileName}.png`, 'image/png');
-                
-                if (btn) {
-                    btn.innerHTML = '<i class="fas fa-image"></i> Baixar PNG';
-                    btn.disabled = false;
-                }
-                
-                showNotification('PNG baixado com sucesso!', 'success');
-            } else {
-                // Se falhar, tenta método alternativo
-                tryAlternativePNGMethod(btn);
-            }
-        })
-        .catch(error => {
-            console.error('Erro ao gerar PNG:', error);
-            tryAlternativePNGMethod(btn);
-        });
-}
-
-// MÉTODO PRINCIPAL: Converter SVG para PNG usando canvas
-// MÉTODO PRINCIPAL: Converter SVG para PNG mantendo dimensões originais
-function generatePNGFromSVG() {
-    return new Promise((resolve, reject) => {
-        try {
-            // 1. Serializar o SVG
-            const serializer = new XMLSerializer();
-            const svgString = serializer.serializeToString(svgElement);
-            
-            // 2. Criar blob do SVG
-            const svgBlob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
-            const svgUrl = URL.createObjectURL(svgBlob);
-            
-            // 3. Criar imagem
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            
-            img.onload = function() {
-                // 4. Usar as dimensões ORIGINAIS do SVG
-                let width, height;
-                
-                // Tentar obter do atributo viewBox primeiro (mais preciso)
-                const viewBox = svgElement.getAttribute('viewBox');
-                if (viewBox) {
-                    const parts = viewBox.split(' ');
-                    width = parseInt(parts[2]);
-                    height = parseInt(parts[3]);
-                } 
-                // Se não tem viewBox, usar atributos width/height
-                else if (svgElement.getAttribute('width') && svgElement.getAttribute('height')) {
-                    width = parseInt(svgElement.getAttribute('width'));
-                    height = parseInt(svgElement.getAttribute('height'));
-                }
-                // Se não tem nenhum, usar dimensões da imagem carregada
-                else {
-                    width = img.naturalWidth || img.width;
-                    height = img.naturalHeight || img.height;
-                }
-                
-                // Se ainda não tem dimensões, usar padrão
-                if (!width || !height || isNaN(width) || isNaN(height)) {
-                    width = img.naturalWidth || img.width;
-                    height = img.naturalHeight || img.height;
-                }
-                
-                console.log('📐 Dimensões originais do SVG:', { width, height });
-                
-                // 5. Criar canvas com as dimensões EXATAS do convite
-                const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                
-                // 6. Desenhar imagem no canvas (sem fundo branco!)
-                const ctx = canvas.getContext('2d');
-                
-                // IMPORTANTE: Limpar canvas para transparente
-                ctx.clearRect(0, 0, width, height);
-                
-                // Desenhar SVG mantendo proporções originais
-                ctx.drawImage(img, 0, 0, width, height);
-                
-                // 7. Converter para PNG (com fundo transparente se o SVG tiver)
-                const pngData = canvas.toDataURL('image/png', 1.0);
-                
-                // 8. Limpar URL
-                URL.revokeObjectURL(svgUrl);
-                
-                resolve(pngData);
-            };
-            
-            img.onerror = function() {
-                URL.revokeObjectURL(svgUrl);
-                reject(new Error('Erro ao carregar imagem SVG'));
-            };
-            
-            // Carregar a imagem
-            img.src = svgUrl;
-            
-        } catch (error) {
-            reject(error);
+async function createHighResolutionSVG(scale = 4) {
+    return new Promise((resolve) => {
+        // Clonar SVG
+        const svgClone = svgElement.cloneNode(true);
+        
+        // Aplicar escala
+        const width = originalDimensions.width * scale;
+        const height = originalDimensions.height * scale;
+        
+        svgClone.setAttribute('width', width);
+        svgClone.setAttribute('height', height);
+        
+        if (svgClone.getAttribute('viewBox')) {
+            const [x, y, w, h] = svgClone.getAttribute('viewBox').split(' ').map(Number);
+            svgClone.setAttribute('viewBox', `${x} ${y} ${w} ${h}`);
         }
+        
+        // Otimizar para renderização
+        svgClone.setAttribute('shape-rendering', 'geometricPrecision');
+        svgClone.setAttribute('text-rendering', 'optimizeLegibility');
+        
+        resolve(svgClone);
     });
 }
 
-// FUNÇÃO PARA OBTER DIMENSÕES PRECISAS DO SVG
-function getOriginalSVGDimensions() {
-    if (!svgElement) return { width: 800, height: 1131 }; // Default A4
-    
-    let width, height;
-    
-    // 1. Tentar viewBox (mais preciso)
-    const viewBox = svgElement.getAttribute('viewBox');
-    if (viewBox) {
-        const parts = viewBox.split(' ');
-        if (parts.length >= 4) {
-            width = Math.round(parseFloat(parts[2]));
-            height = Math.round(parseFloat(parts[3]));
-            console.log('📏 Dimensões do viewBox:', width, 'x', height);
-            return { width, height };
-        }
-    }
-    
-    // 2. Tentar atributos width/height
-    const svgWidth = svgElement.getAttribute('width');
-    const svgHeight = svgElement.getAttribute('height');
-    
-    if (svgWidth && svgHeight) {
-        // Remover unidades (px, pt, etc)
-        width = parseFloat(svgWidth);
-        height = parseFloat(svgHeight);
-        console.log('📏 Dimensões dos atributos:', width, 'x', height);
-        return { width, height };
-    }
-    
-    // 3. Tentar estilo CSS
-    const style = window.getComputedStyle(svgElement);
-    if (style.width && style.height) {
-        width = parseFloat(style.width);
-        height = parseFloat(style.height);
-        console.log('📏 Dimensões do estilo:', width, 'x', height);
-        return { width, height };
-    }
-    
-    // 4. Usar dimensões padrão do seu convite (ajuste conforme necessário)
-    console.log('⚠️ Usando dimensões padrão');
-    return { width: 800, height: 1131 }; // Ajuste para o tamanho do SEU convite
-}
-// MÉTODO ALTERNATIVO: Se o método principal falhar
-function tryAlternativePNGMethod(btn) {
-    console.log('Tentando método alternativo para PNG...');
-    
-    // Método 2: Usar html2canvas como fallback
-    const svgContainer = document.querySelector('#svgContainer svg');
-    
-    if (!svgContainer) {
-        showNotification('Erro: SVG não encontrado', 'error');
-        if (btn) {
-            btn.innerHTML = '<i class="fas fa-image"></i> Baixar PNG';
-            btn.disabled = false;
-        }
-        return;
-    }
-    
-    // Salvar estilo original
-    const originalStyle = svgContainer.getAttribute('style');
-    
-    // Aplicar estilos para melhor conversão
-    svgContainer.style.width = '100%';
-    svgContainer.style.height = 'auto';
-    svgContainer.style.display = 'block';
-    
-    // Dar tempo para renderizar
-    setTimeout(() => {
-        html2canvas(svgContainer, {
-            backgroundColor: '#ffffff',
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            allowTaint: true,
-            removeContainer: true
-        }).then(canvas => {
-            // Restaurar estilo original
-            if (originalStyle) {
-                svgContainer.setAttribute('style', originalStyle);
-            } else {
-                svgContainer.removeAttribute('style');
-            }
+async function convertSVGToCanvas(svgElement) {
+    return new Promise((resolve, reject) => {
+        // Serializar SVG
+        const serializer = new XMLSerializer();
+        const svgString = serializer.serializeToString(svgElement);
+        
+        // Criar blob
+        const svgBlob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
+        const svgUrl = URL.createObjectURL(svgBlob);
+        
+        // Criar imagem
+        const img = new Image();
+        
+        img.onload = function() {
+            // Criar canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
             
-            // Converter para PNG
-            const pngData = canvas.toDataURL('image/png', 1.0);
-            downloadFile(pngData, `${currentFileName}.png`, 'image/png');
+            // Configurar contexto para máxima qualidade
+            const ctx = canvas.getContext('2d', {
+                alpha: true,
+                desynchronized: false
+            });
             
-            if (btn) {
-                btn.innerHTML = '<i class="fas fa-image"></i> Baixar PNG';
-                btn.disabled = false;
-            }
+            // Configurações de qualidade
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.textDrawingMode = 'glyph';
             
-            showNotification('PNG baixado com sucesso! (Método alternativo)', 'success');
+            // Fundo transparente
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-        }).catch(error => {
-            console.error('Método alternativo também falhou:', error);
+            // Desenhar SVG
+            ctx.drawImage(img, 0, 0);
             
-            // Restaurar estilo em caso de erro
-            if (originalStyle) {
-                svgContainer.setAttribute('style', originalStyle);
-            }
+            // Limpar URL
+            URL.revokeObjectURL(svgUrl);
             
-            if (btn) {
-                btn.innerHTML = '<i class="fas fa-image"></i> Baixar PNG';
-                btn.disabled = false;
-            }
-            
-            showNotification('Erro ao gerar PNG. Tente baixar como SVG.', 'error');
-            
-            // Método 3: Sugerir converter online
-            showConversionAlternative();
-        });
-    }, 500);
+            resolve(canvas);
+        };
+        
+        img.onerror = function() {
+            URL.revokeObjectURL(svgUrl);
+            reject(new Error('Falha ao carregar imagem SVG'));
+        };
+        
+        img.src = svgUrl;
+        img.crossOrigin = 'anonymous';
+    });
 }
 
-// ADICIONE no final do loadSVGWithProgress()
-function analyzeSVGDimensions() {
-    console.log('🔍 ANALISANDO DIMENSÕES DO SVG:');
-    console.log('1. viewBox:', svgElement.getAttribute('viewBox'));
-    console.log('2. width:', svgElement.getAttribute('width'));
-    console.log('3. height:', svgElement.getAttribute('height'));
-    console.log('4. style:', svgElement.getAttribute('style'));
+// ========== MÉTODO ALTERNATIVO PNG ==========
+async function tryAlternativePNG() {
+    showNotification('Tentando método alternativo...', 'info');
     
-    // Ver dimensões reais na tela
-    const rect = svgElement.getBoundingClientRect();
-    console.log('5. Na tela:', rect.width + 'x' + rect.height);
-    
-    // Sugerir dimensões
-    const viewBox = svgElement.getAttribute('viewBox');
-    if (viewBox) {
-        const parts = viewBox.split(' ');
-        if (parts.length >= 4) {
-            const suggestedWidth = parseInt(parts[2]);
-            const suggestedHeight = parseInt(parts[3]);
-            console.log('💡 SUGESTÃO: Use', suggestedWidth + 'x' + suggestedHeight);
-        }
-    }
-}
-
-// Chame esta função depois de carregar o SVG
-analyzeSVGDimensions();
-
-// FUNÇÃO AUXILIAR PARA DOWNLOAD
-function downloadFile(data, filename, mimeType) {
     try {
-        // Criar link temporário
-        const link = document.createElement('a');
-        link.href = data;
-        link.download = filename;
+        // Usar html2canvas como fallback
+        const canvas = await html2canvas(document.querySelector("#svgContainer svg"), {
+            backgroundColor: null,
+            scale: 3,
+            useCORS: true,
+            allowTaint: true,
+            logging: false,
+            onclone: function(clonedDoc) {
+                // Aumentar tamanho no clone
+                const clonedSVG = clonedDoc.querySelector('svg');
+                if (clonedSVG) {
+                    clonedSVG.setAttribute('width', originalDimensions.width * 2);
+                    clonedSVG.setAttribute('height', originalDimensions.height * 2);
+                }
+            }
+        });
         
-        // Configurar para diferentes tipos de dados
-        if (data.startsWith('data:')) {
-            // Já está em base64
-        } else {
-            // Criar blob se necessário
-            const blob = new Blob([data], {type: mimeType});
-            link.href = URL.createObjectURL(blob);
-        }
+        const pngData = canvas.toDataURL('image/png', 0.95);
+        downloadFile(pngData, `${currentFileName}_alta_qualidade.png`);
         
-        // Disparar download
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        showNotification('PNG gerado com método alternativo!', 'success');
         
-        // Limpar URL se foi criada
-        if (link.href.startsWith('blob:')) {
-            setTimeout(() => URL.revokeObjectURL(link.href), 100);
-        }
-        
-        return true;
     } catch (error) {
-        console.error('Erro ao criar download:', error);
-        return false;
+        console.error('Método alternativo falhou:', error);
+        showNotification('❌ Todos os métodos falharam. Baixe SVG e converta online.', 'error');
     }
 }
 
-// SUGESTÃO DE CONVERSÃO ONLINE SE TUDO FALHAR
-function showConversionAlternative() {
-    const alternativeDiv = document.createElement('div');
-    alternativeDiv.className = 'alternative-solution';
-    alternativeDiv.innerHTML = `
-        <div style="
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            z-index: 10000;
-            max-width: 500px;
-            width: 90%;
-            text-align: center;
-        ">
-            <h3 style="color: #e91e63; margin-bottom: 20px;">
-                <i class="fas fa-tools"></i> Alternativa de Conversão
-            </h3>
-            <p>O PNG não pôde ser gerado automaticamente. Sugestões:</p>
-            <ol style="text-align: left; margin: 20px;">
-                <li>Baixe o SVG e converta online em:</li>
-                <ul>
-                    <li><a href="https://convertio.co/svg-png/" target="_blank">Convertio</a></li>
-                    <li><a href="https://svgtopng.com/" target="_blank">SVGtoPNG</a></li>
-                    <li><a href="https://www.freeconvert.com/svg-to-png" target="_blank">FreeConvert</a></li>
-                </ul>
-                <li>Ou abra o SVG no navegador e tire um print screen</li>
-            </ol>
-            <div style="margin-top: 25px;">
-                <button onclick="this.parentElement.parentElement.remove()" 
-                        style="padding: 10px 25px; background: #e91e63; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                    Entendi
-                </button>
+// ========== FUNÇÕES AUXILIARES ==========
+function downloadFile(data, filename) {
+    const link = document.createElement('a');
+    link.href = data;
+    link.download = filename;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function showLoadingState(message) {
+    document.getElementById('svgContainer').innerHTML = `
+        <div class="loading-high-quality">
+            <div class="spinner">
+                <i class="fas fa-palette fa-spin"></i>
+            </div>
+            <h3>${message}</h3>
+            <p>Renderizando em qualidade máxima...</p>
+            <div class="progress">
+                <div class="progress-bar"></div>
             </div>
         </div>
     `;
-    
-    document.body.appendChild(alternativeDiv);
 }
 
-// ADICIONE ESTA FUNÇÃO PARA TESTAR O SVG
-function testSVGForPNGConversion() {
-    console.log('🔍 Testando SVG para conversão PNG...');
-    
-    if (!svgElement) {
-        console.error('SVG não carregado');
-        return;
-    }
-    
-    // Verificar características do SVG
-    const svgString = new XMLSerializer().serializeToString(svgElement);
-    
-    console.log('📊 Informações do SVG:');
-    console.log('- Tamanho:', svgString.length, 'caracteres');
-    console.log('- Tem imagens externas:', svgString.includes('xlink:href="http'));
-    console.log('- Tem base64 images:', svgString.includes('base64'));
-    console.log('- Tem elementos foreignObject:', svgString.includes('foreignObject'));
-    
-    // Testar conversão simples
-    const img = new Image();
-    const svgBlob = new Blob([svgString], {type: 'image/svg+xml'});
-    const url = URL.createObjectURL(svgBlob);
-    
-    img.onload = function() {
-        console.log('✅ SVG pode ser carregado como imagem:', img.width, 'x', img.height);
-        URL.revokeObjectURL(url);
-    };
-    
-    img.onerror = function() {
-        console.error('❌ SVG não pode ser carregado como imagem');
-        URL.revokeObjectURL(url);
-        
-        // Verificar problemas comuns
-        if (svgString.includes('<!ENTITY')) {
-            console.warn('⚠️ SVG contém entidades XML que podem causar problemas');
-        }
-    };
-    
-    img.src = url;
+function hideLoadingState() {
+    // Loading já foi removido quando o SVG foi carregado
 }
 
-// ADICIONE NO FINAL DO loadSVGWithProgress (depois de svgElement = ...)
-// Adicione esta linha:
-console.log('SVG carregado, testando compatibilidade PNG...');
-testSVGForPNGConversion();
+function showErrorState(message) {
+    document.getElementById('svgContainer').innerHTML = `
+        <div class="error-high-quality">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>${message}</h3>
+            <p>Verifique se o arquivo "convite.svg" está na mesma pasta.</p>
+            <button onclick="loadSVGWithPremiumQuality()" class="btn-retry">
+                <i class="fas fa-redo"></i> Tentar novamente
+            </button>
+        </div>
+    `;
+}
 
-function showNotification(message, type) {
-    // Remover notificações antigas
-    const oldNotifications = document.querySelectorAll('.notification');
-    oldNotifications.forEach(n => n.remove());
-    
+function showNotification(message, type = 'info') {
+    // Criar elemento de notificação
     const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
+    notification.className = `notification-${type}`;
     notification.innerHTML = `
         <i class="fas fa-${type === 'success' ? 'check-circle' : 
-                         type === 'info' ? 'info-circle' : 'exclamation-circle'}"></i>
+                         type === 'error' ? 'exclamation-circle' : 
+                         type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
         <span>${message}</span>
+    `;
+    
+    // Estilos
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        border-radius: 10px;
+        background: ${type === 'success' ? '#4CAF50' : 
+                    type === 'error' ? '#f44336' : 
+                    type === 'warning' ? '#ff9800' : '#2196F3'};
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 9999;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        animation: slideInRight 0.3s ease;
     `;
     
     document.body.appendChild(notification);
     
     // Remover após 4 segundos
     setTimeout(() => {
-        if (notification.parentNode) {
-            notification.style.opacity = '0';
-            notification.style.transform = 'translateX(100%)';
-            setTimeout(() => notification.remove(), 300);
-        }
+        notification.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
     }, 4000);
 }
 
-// Atalhos de teclado
-document.addEventListener('keydown', function(e) {
-    if (e.ctrlKey && e.key === 's') {
-        e.preventDefault();
-        downloadSVG();
+// ========== FUNÇÕES DE TESTE ==========
+function testQuality() {
+    const report = `
+        <h3><i class="fas fa-chart-line"></i> Relatório de Qualidade</h3>
+        <div class="quality-metrics">
+            <div class="metric">
+                <strong>Dimensões do SVG:</strong>
+                <p>${originalDimensions.width} × ${originalDimensions.height}px</p>
+            </div>
+            <div class="metric">
+                <strong>PNG Gerado:</strong>
+                <p>${originalDimensions.width * 4} × ${originalDimensions.height * 4}px (4×)</p>
+            </div>
+            <div class="metric">
+                <strong>Resolução:</strong>
+                <p>${Math.round((originalDimensions.width * 4) / 96)} DPI (alta)</p>
+            </div>
+            <div class="metric">
+                <strong>Fontes Preservadas:</strong>
+                <p>${originalStyles.nome ? '✅' : '❌'} ${originalStyles.nome?.fontFamily || 'N/A'}</p>
+            </div>
+        </div>
+        <div class="quality-tips">
+            <h4><i class="fas fa-lightbulb"></i> Dicas:</h4>
+            <ul>
+                <li>PNG em 4× resolução para impressão profissional</li>
+                <li>Transparência preservada</li>
+                <li>Anti-aliasing ativado</li>
+                <li>Renderização vetorial mantida</li>
+            </ul>
+        </div>
+    `;
+    
+    document.getElementById('qualityReport').innerHTML = report;
+    document.getElementById('qualityModal').style.display = 'flex';
+}
+
+function showDimensions() {
+    alert(`📐 Dimensões do Convite:\n\nLargura: ${originalDimensions.width}px\nAltura: ${originalDimensions.height}px\n\nPNG será gerado em: ${originalDimensions.width * 4} × ${originalDimensions.height * 4}px`);
+}
+
+function closeModal() {
+    document.getElementById('qualityModal').style.display = 'none';
+}
+
+// ========== CSS DINÂMICO PARA ANIMAÇÕES ==========
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
     }
-    if (e.ctrlKey && e.key === 'p') {
-        e.preventDefault();
-        downloadPNG();
+    @keyframes slideOutRight {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
     }
-});
+    .progress {
+        width: 200px;
+        height: 6px;
+        background: #e0e0e0;
+        border-radius: 3px;
+        margin: 20px auto;
+        overflow: hidden;
+    }
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #e91e63, #9c27b0);
+        width: 0%;
+        animation: loadingBar 2s infinite;
+    }
+    @keyframes loadingBar {
+        0% { width: 0%; }
+        50% { width: 70%; }
+        100% { width: 100%; }
+    }
+`;
+document.head.appendChild(style);

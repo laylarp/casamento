@@ -3,144 +3,263 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editor de Convites - Sicília & Ocilia</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Editor de Convites Premium - Sicília & Ocilia</title>
+    
+    <!-- Fontes premium -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Dancing+Script:wght@700&family=Montserrat:wght@400;600&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- Ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💍</text></svg>">
 </head>
 <body>
     <!-- Tela de Login -->
     <div id="loginScreen" class="screen active">
         <div class="login-container">
-            <div class="logo">
-                <i class="fas fa-ring"></i>
-                <h1>Editor de Convites</h1>
-                <p>Sicília Pene & Ocilia Mondane</p>
+            <div class="logo-animated">
+                <div class="ring-ring">
+                    <i class="fas fa-ring"></i>
+                </div>
+                <h1><i class="fas fa-heart"></i> Editor de Convites</h1>
+                <p class="subtitle">Sicília Pene & Ocilia Mondane</p>
+                <p class="date">07 de Março de 2026</p>
             </div>
             
             <div class="login-form">
-                <h2><i class="fas fa-lock"></i> Acesso Restrito</h2>
+                <h2><i class="fas fa-lock"></i> Acesso Exclusivo</h2>
                 <p>Digite a senha fornecida pelos noivos:</p>
                 
-                <div class="input-group">
-                    <input type="password" id="password" placeholder="Senha de acesso" autocomplete="off">
-                    <button onclick="togglePassword()" type="button" class="eye-btn">
+                <div class="input-group premium">
+                    <input type="password" id="password" placeholder="Digite a senha de acesso" autocomplete="off">
+                    <button onclick="togglePassword()" type="button" class="eye-btn premium">
                         <i class="fas fa-eye"></i>
                     </button>
                 </div>
                 
-                <button onclick="checkPassword()" class="btn-login">
-                    <i class="fas fa-sign-in-alt"></i> Entrar
+                <button onclick="checkPassword()" class="btn-login premium">
+                    <i class="fas fa-sign-in-alt"></i> Acessar Editor
                 </button>
                 
                 <p id="loginError" class="error"></p>
                 
-                <div class="instructions">
-                    <p><i class="fas fa-info-circle"></i> <strong>Instruções:</strong></p>
-                    <p>1. Use a senha fornecida pelos noivos</p>
-                    <p>2. Edite apenas o nome e número de convidados</p>
-                    <p>3. Baixe o convite personalizado</p>
+                <div class="instructions premium">
+                    <h4><i class="fas fa-gem"></i> Recursos Premium:</h4>
+                    <ul>
+                        <li><i class="fas fa-check-circle"></i> Qualidade máxima (técnica Canva)</li>
+                        <li><i class="fas fa-check-circle"></i> Fontes preservadas automaticamente</li>
+                        <li><i class="fas fa-check-circle"></i> Centralização inteligente</li>
+                        <li><i class="fas fa-check-circle"></i> Download PNG ultra HD</li>
+                    </ul>
                 </div>
             </div>
+            
+            <footer class="login-footer">
+                <p>💍 Sistema de convites personalizados • Casamento 07/03/2026</p>
+            </footer>
         </div>
     </div>
 
     <!-- Tela do Editor -->
     <div id="editorScreen" class="screen">
-        <header>
+        <!-- Header Premium -->
+        <header class="premium-header">
             <div class="header-content">
-                <h1><i class="fas fa-heart"></i> Editor de Convite</h1>
-                <p>Casamento: 07 de Março de 2026</p>
-                <button onclick="logout()" class="btn-logout">
-                    <i class="fas fa-sign-out-alt"></i> Sair
-                </button>
+                <div class="header-left">
+                    <div class="couple-info">
+                        <i class="fas fa-hearts"></i>
+                        <div>
+                            <h1>Editor de Convite</h1>
+                            <p>Sicília & Ocilia • 07/03/2026</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="header-right">
+                    <div class="quality-badge">
+                        <i class="fas fa-crown"></i>
+                        <span>QUALIDADE CANVA</span>
+                    </div>
+                    <button onclick="logout()" class="btn-logout premium">
+                        <i class="fas fa-sign-out-alt"></i> Sair
+                    </button>
+                </div>
             </div>
         </header>
 
-        <main class="editor-container">
-            <!-- Painel de Edição -->
+        <!-- Container Principal -->
+        <main class="editor-container premium">
+            <!-- Painel de Edição (Esquerda) -->
             <div class="editor-panel">
-                <div class="panel-card">
-                    <h2><i class="fas fa-edit"></i> Editar Convite</h2>
-                    
-                    <div class="form-group">
-                        <label for="guestName">
-                            <i class="fas fa-user"></i> Nome do Convidado:
-                        </label>
-                        <input type="text" id="guestName" 
-                               placeholder="Digite o nome completo"
-                               oninput="updatePreview()">
-                        <p class="hint">Ex: Maria Silva, Família Santos</p>
+                <div class="panel-card premium">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-magic"></i> Personalizar Convite</h2>
+                        <p class="panel-subtitle">Edite os campos abaixo e veja em tempo real</p>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="guestCount">
-                            <i class="fas fa-users"></i> Número de Convidados:
+                    <!-- Campo Nome -->
+                    <div class="form-group premium">
+                        <label for="guestName" class="form-label">
+                            <i class="fas fa-user-edit"></i>
+                            <span>Nome do Convidado</span>
+                            <span class="char-counter" id="nameCounter">0/40</span>
                         </label>
-                        <div class="number-input">
-                            <button onclick="decrementCount()" class="btn-count">
+                        <input type="text" id="guestName" 
+                               placeholder="Ex: Família Silva, Maria Santos..."
+                               maxlength="40"
+                               oninput="updateNameWithCentering(this.value)">
+                        <p class="form-hint">O nome será centralizado automaticamente</p>
+                    </div>
+                    
+                    <!-- Campo Número de Convidados -->
+                    <div class="form-group premium">
+                        <label for="guestCount" class="form-label">
+                            <i class="fas fa-users-crown"></i>
+                            <span>Número de Convidados</span>
+                        </label>
+                        <div class="number-input premium">
+                            <button onclick="decrementCount()" class="btn-count premium minus">
                                 <i class="fas fa-minus"></i>
                             </button>
-                            <input type="number" id="guestCount" 
-                                   value="1" min="1" max="10"
-                                   oninput="updatePreview()">
-                            <button onclick="incrementCount()" class="btn-count">
+                            <div class="number-display">
+                                <input type="number" id="guestCount" 
+                                       value="1" min="1" max="10"
+                                       oninput="updateCount(this.value)">
+                                <span class="number-label">pessoa(s)</span>
+                            </div>
+                            <button onclick="incrementCount()" class="btn-count premium plus">
                                 <i class="fas fa-plus"></i>
                             </button>
                         </div>
-                        <p class="hint">Máximo: 10 pessoas por convite</p>
+                        <p class="form-hint">Máximo: 10 convidados por convite</p>
                     </div>
                     
-                    <div class="preview-text">
+                    <!-- Pré-visualização de Texto -->
+                    <div class="preview-text premium">
                         <h3><i class="fas fa-eye"></i> Pré-visualização:</h3>
-                        <div class="text-preview">
-                            <p><strong>Nome:</strong> <span id="previewName">NOME_AQUI</span></p>
-                            <p><strong>Convidados:</strong> <span id="previewCount">1</span> pessoa(s)</p>
+                        <div class="text-preview premium">
+                            <div class="preview-item">
+                                <span class="preview-label">Nome:</span>
+                                <span id="previewName" class="preview-value">NOME_AQUI</span>
+                            </div>
+                            <div class="preview-item">
+                                <span class="preview-label">Convidados:</span>
+                                <span id="previewCount" class="preview-value">1</span>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="action-buttons">
-                        <button onclick="resetForm()" class="btn-secondary">
-                            <i class="fas fa-redo"></i> Limpar
+                    <!-- Botões de Ação -->
+                    <div class="action-buttons premium">
+                        <button onclick="resetForm()" class="btn-action secondary">
+                            <i class="fas fa-broom"></i> Limpar
                         </button>
-                        <button onclick="downloadSVG()" class="btn-primary">
-                            <i class="fas fa-download"></i> Baixar SVG
+                        <button onclick="downloadSVG()" class="btn-action primary">
+                            <i class="fas fa-file-download"></i> Baixar SVG
                         </button>
-                        <button onclick="downloadPNG()" class="btn-primary">
-                            <i class="fas fa-image"></i> Baixar PNG
-                        </button>
-                        <button onclick="testSVGForPNGConversion()" class="btn-test" title="Testar compatibilidade PNG">
-                            <i class="fas fa-vial"></i> Testar PNG
+                        <button onclick="downloadPNGUltraHD()" class="btn-action primary ultra">
+                            <i class="fas fa-download"></i> PNG Ultra HD
                         </button>
                     </div>
                     
-                    <div class="instructions-editor">
-                        <h4><i class="fas fa-lightbulb"></i> Dicas:</h4>
+                    <!-- Dicas e Informações -->
+                    <div class="info-box premium">
+                        <h4><i class="fas fa-lightbulb"></i> Dicas Premium:</h4>
                         <ul>
-                            <li>O convite será salvo com o nome do convidado</li>
-                            <li>PNG tem melhor qualidade para impressão</li>
-                            <li>SVG pode ser editado posteriormente</li>
+                            <li><strong>PNG Ultra HD:</strong> 4x resolução original (qualidade Canva)</li>
+                            <li><strong>Centralização automática:</strong> Nomes longos se ajustam</li>
+                            <li><strong>Fontes preservadas:</strong> Estilo original mantido</li>
+                            <li><strong>Transparência:</strong> PNG sem fundo branco</li>
                         </ul>
+                    </div>
+                    
+                    <!-- Teste de Qualidade -->
+                    <div class="quality-test">
+                        <button onclick="testQuality()" class="btn-test">
+                            <i class="fas fa-vial"></i> Testar Qualidade
+                        </button>
+                        <button onclick="showDimensions()" class="btn-test">
+                            <i class="fas fa-ruler-combined"></i> Ver Dimensões
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Visualização do Convite -->
+            <!-- Visualização do Convite (Direita) -->
             <div class="preview-panel">
-                <div class="panel-card">
-                    <h2><i class="fas fa-gift"></i> Convite Personalizado</h2>
-                    <div class="preview-container">
-                        <div id="svgContainer">
+                <div class="panel-card premium">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-gift"></i> Convite Personalizado</h2>
+                        <p class="panel-subtitle">Visualização em tempo real • Qualidade máxima</p>
+                    </div>
+                    
+                    <!-- Container do SVG -->
+                    <div class="preview-container premium">
+                        <div id="svgContainer" class="svg-container-hq">
                             <!-- SVG será carregado aqui -->
                         </div>
+                        <div class="quality-overlay">
+                            <span><i class="fas fa-star"></i> Renderização Premium</span>
+                        </div>
                     </div>
-                    <div class="preview-info">
-                        <p><i class="fas fa-calendar"></i> <strong>Data:</strong> 07 de Março de 2026</p>
-                        <p><i class="fas fa-clock"></i> <strong>Cerimônia:</strong> 09:30</p>
-                        <p><i class="fas fa-church"></i> Igreja Reformada em Moçambique</p>
+                    
+                    <!-- Informações do Evento -->
+                    <div class="event-info premium">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <i class="fas fa-calendar-alt"></i>
+                                <div>
+                                    <strong>Data</strong>
+                                    <p>07 de Março 2026</p>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-clock"></i>
+                                <div>
+                                    <strong>Cerimônia</strong>
+                                    <p>09:30 horas</p>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-church"></i>
+                                <div>
+                                    <strong>Local</strong>
+                                    <p>Igreja Reformada</p>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-utensils"></i>
+                                <div>
+                                    <strong>Recepção</strong>
+                                    <p>14:00 horas</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </main>
+        
+        <!-- Footer -->
+        <footer class="editor-footer">
+            <p>Sistema de Convites Personalizados • Qualidade Canva • © 2026 Casamento Sicília & Ocilia</p>
+            <p class="footer-note">PNG gerado em 4K de resolução • Fontes preservadas • Centralização automática</p>
+        </footer>
+    </div>
+
+    <!-- Modal de Qualidade -->
+    <div id="qualityModal" class="modal">
+        <div class="modal-content premium">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h2><i class="fas fa-award"></i> Relatório de Qualidade</h2>
+            <div id="qualityReport"></div>
+        </div>
     </div>
 
     <!-- Scripts -->
