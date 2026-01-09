@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Convites - Sicília & Ocilia</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Tela de Login -->
+    <div id="loginScreen" class="screen active">
+        <div class="login-container">
+            <div class="logo">
+                <i class="fas fa-ring"></i>
+                <h1>Editor de Convites</h1>
+                <p>Sicília Pene & Ocilia Mondane</p>
+            </div>
+            
+            <div class="login-form">
+                <h2><i class="fas fa-lock"></i> Acesso Restrito</h2>
+                <p>Digite a senha fornecida pelos noivos:</p>
+                
+                <div class="input-group">
+                    <input type="password" id="password" placeholder="Senha de acesso" autocomplete="off">
+                    <button onclick="togglePassword()" type="button" class="eye-btn">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                
+                <button onclick="checkPassword()" class="btn-login">
+                    <i class="fas fa-sign-in-alt"></i> Entrar
+                </button>
+                
+                <p id="loginError" class="error"></p>
+                
+                <div class="instructions">
+                    <p><i class="fas fa-info-circle"></i> <strong>Instruções:</strong></p>
+                    <p>1. Use a senha fornecida pelos noivos</p>
+                    <p>2. Edite apenas o nome e número de convidados</p>
+                    <p>3. Baixe o convite personalizado</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela do Editor -->
+    <div id="editorScreen" class="screen">
+        <header>
+            <div class="header-content">
+                <h1><i class="fas fa-heart"></i> Editor de Convite</h1>
+                <p>Casamento: 07 de Março de 2026</p>
+                <button onclick="logout()" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
+            </div>
+        </header>
+
+        <main class="editor-container">
+            <!-- Painel de Edição -->
+            <div class="editor-panel">
+                <div class="panel-card">
+                    <h2><i class="fas fa-edit"></i> Editar Convite</h2>
+                    
+                    <div class="form-group">
+                        <label for="guestName">
+                            <i class="fas fa-user"></i> Nome do Convidado:
+                        </label>
+                        <input type="text" id="guestName" 
+                               placeholder="Digite o nome completo"
+                               oninput="updatePreview()">
+                        <p class="hint">Ex: Maria Silva, Família Santos</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="guestCount">
+                            <i class="fas fa-users"></i> Número de Convidados:
+                        </label>
+                        <div class="number-input">
+                            <button onclick="decrementCount()" class="btn-count">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" id="guestCount" 
+                                   value="1" min="1" max="10"
+                                   oninput="updatePreview()">
+                            <button onclick="incrementCount()" class="btn-count">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <p class="hint">Máximo: 10 pessoas por convite</p>
+                    </div>
+                    
+                    <div class="preview-text">
+                        <h3><i class="fas fa-eye"></i> Pré-visualização:</h3>
+                        <div class="text-preview">
+                            <p><strong>Nome:</strong> <span id="previewName">NOME_AQUI</span></p>
+                            <p><strong>Convidados:</strong> <span id="previewCount">1</span> pessoa(s)</p>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button onclick="resetForm()" class="btn-secondary">
+                            <i class="fas fa-redo"></i> Limpar
+                        </button>
+                        <button onclick="downloadSVG()" class="btn-primary">
+                            <i class="fas fa-download"></i> Baixar SVG
+                        </button>
+                        <button onclick="downloadPNG()" class="btn-primary">
+                            <i class="fas fa-image"></i> Baixar PNG
+                        </button>
+                        <button onclick="testSVGForPNGConversion()" class="btn-test" title="Testar compatibilidade PNG">
+                            <i class="fas fa-vial"></i> Testar PNG
+                        </button>
+                    </div>
+                    
+                    <div class="instructions-editor">
+                        <h4><i class="fas fa-lightbulb"></i> Dicas:</h4>
+                        <ul>
+                            <li>O convite será salvo com o nome do convidado</li>
+                            <li>PNG tem melhor qualidade para impressão</li>
+                            <li>SVG pode ser editado posteriormente</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visualização do Convite -->
+            <div class="preview-panel">
+                <div class="panel-card">
+                    <h2><i class="fas fa-gift"></i> Convite Personalizado</h2>
+                    <div class="preview-container">
+                        <div id="svgContainer">
+                            <!-- SVG será carregado aqui -->
+                        </div>
+                    </div>
+                    <div class="preview-info">
+                        <p><i class="fas fa-calendar"></i> <strong>Data:</strong> 07 de Março de 2026</p>
+                        <p><i class="fas fa-clock"></i> <strong>Cerimônia:</strong> 09:30</p>
+                        <p><i class="fas fa-church"></i> Igreja Reformada em Moçambique</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
