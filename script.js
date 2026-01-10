@@ -172,7 +172,7 @@ function preserveOriginalData() {
             fontSize: parseFloat(getComputedStyle(countEl).fontSize) || 16,
             fill: countEl.getAttribute('fill') || '#000000',
             textAnchor: countEl.getAttribute('text-anchor') || 'middle',
-            originalText: countEl.textContent || '1'
+            originalText: countEl.textContent || '0'
         };
     }
 }
@@ -216,7 +216,7 @@ function setupTextEditing() {
     }
     
     if (originalStyles.count) {
-        countInput.value = originalStyles.count.originalText.replace(/\D/g, '') || '1';
+        countInput.value = originalStyles.count.originalText.replace(/\D/g, '') || '0';
         updateCount(countInput.value);
     }
 }
@@ -266,8 +266,8 @@ function updateCount(count) {
     if (!originalStyles.count) return;
     
     const countEl = originalStyles.count.element;
-    const num = parseInt(count) || 1;
-    const text = num === 1 ? "1" : `${num} `;
+    const num = parseInt(count) || 0; // Alterado para permitir 0
+    const text = num === 0 ? "0" : (num === 1 ? "1" : `${num} `); // Adicionado caso para 0
     
     // Aplicar estilos originais
     applyOriginalStyles(countEl, originalStyles.count);
@@ -301,17 +301,17 @@ function estimateTextWidth(text, styles) {
 // ========== CONTROLES DE NÚMERO ==========
 function incrementCount() {
     const input = document.getElementById('guestCount');
-    let value = parseInt(input.value) || 1;
+    let value = parseInt(input.value) || 0;
     if (value < 10) {
-        input.value = value + 1;
+        input.value = value + 1; // Corrigido: era +0, agora é +1
         updateCount(input.value);
     }
 }
 
 function decrementCount() {
     const input = document.getElementById('guestCount');
-    let value = parseInt(input.value) || 1;
-    if (value > 1) {
+    let value = parseInt(input.value) || 0;
+    if (value > 0) { // Alterado de > 1 para > 0
         input.value = value - 1;
         updateCount(input.value);
     }
@@ -320,13 +320,13 @@ function decrementCount() {
 function resetForm() {
     if (confirm('Limpar todos os campos?')) {
         document.getElementById('guestName').value = '';
-        document.getElementById('guestCount').value = '1';
+        document.getElementById('guestCount').value = '0'; // Alterado de '1' para '0'
         document.getElementById('nameCounter').textContent = '0/40';
         
         if (originalStyles.nome) {
             updateNameWithSmartCentering(originalStyles.nome.originalText);
         }
-        updateCount('1');
+        updateCount('0'); // Alterado de '1' para '0'
         
         showNotification('Formulário limpo com sucesso!', 'info');
     }
@@ -489,7 +489,7 @@ async function convertSVGToCanvas(svgElement) {
             URL.revokeObjectURL(svgUrl);
             reject(new Error('Falha ao carregar imagem SVG'));
         };
-        
+    
         img.src = svgUrl;
         img.crossOrigin = 'anonymous';
     });
